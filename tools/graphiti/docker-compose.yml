@@ -1,0 +1,60 @@
+services:
+  graphiti-mcp:
+    image: zepai/knowledge-graph-mcp:standalone
+    container_name: ${PROJECT_NAME:-workspace}-graphiti-mcp
+    profiles:
+      - "default"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    networks:
+      - workspace-network
+    env_file:
+      - path: ../../.env
+        required: true
+    environment:
+      # Application configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID:-}
+      - GOOGLE_LOCATION=${GOOGLE_LOCATION:-us-central1}
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - MODEL_NAME=${MODEL_NAME:-gemini-2.0-flash}
+      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS:-4096}
+      - EMBEDDER_PROVIDER=${EMBEDDER_PROVIDER:-gemini}
+      - EMBEDDER_MODEL=${EMBEDDER_MODEL:-gemini-embedding-2}
+      - EMBEDDER_DIMENSIONS=${EMBEDDER_DIMENSIONS:-3072}
+      - GRAPHITI_GROUP_ID=${GRAPHITI_GROUP_ID:-workspace}
+      - SEMAPHORE_LIMIT=${SEMAPHORE_LIMIT:-10}
+      - PORT_MCP=${PORT_MCP:-8001}
+      - PORT=${PORT_MCP:-8001}
+      - USE_PARALLEL_RUNTIME=${USE_PARALLEL_RUNTIME:-false}
+
+      # Database configuration
+      - NEO4J_URI=${NEO4J_URI:-bolt://neo4j:7687}
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-password}
+      - NEO4J_DATABASE=${NEO4J_DATABASE:-neo4j}
+    volumes:
+      - ./config.yaml:/app/mcp/config/config.yaml:ro
+    ports:
+      - "${HOST_BIND:-127.0.0.1}:${PORT_MCP:-8001}:${PORT_MCP:-8001}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT_MCP:-8001}/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    command: ["uv", "run", "main.py"]
+
+networks:
+  workspace-network:
+    name: ${PROJECT_NAME:-workspace}-network
+    external: true

@@ -1,0 +1,8 @@
+include:
+  - tools/neo4j/docker-compose.yml
+  - tools/graphiti/docker-compose.yml
+
+networks:
+  workspace-network:
+    name: ${PROJECT_NAME:-workspace}-network
+    external: true
