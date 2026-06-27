@@ -1,0 +1,3 @@
+[submodule "tools/graphiti/graphiti"]
+	path = tools/graphiti/graphiti
+	url = https://github.com/getzep/graphiti.git
